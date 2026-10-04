@@ -1,0 +1,50 @@
+@font-face{font-family:PsyNet Sans;src:url(PsyNet-Sans.woff2) format('woff2');font-display:swap}
+@font-face{font-family:PsyNet Circuit;src:url(PsyNet-Circuit.woff2) format('woff2');font-display:swap}
+/* Native Keycloak 26 consoles use PatternFly 5. Keep their layout and controls. */
+:root,:root.pf-v5-theme-dark{
+  --pf-v5-global--FontFamily--text:'PsyNet Sans',system-ui,sans-serif;
+  --pf-v5-global--FontFamily--heading:'PsyNet Circuit','PsyNet Sans',sans-serif;
+  --pf-v5-global--BackgroundColor--100:var(--psy-surface);
+  --pf-v5-global--BackgroundColor--200:var(--psy-background);
+  --pf-v5-global--BackgroundColor--300:var(--psy-field);
+  --pf-v5-global--BackgroundColor--400:var(--psy-field);
+  --pf-v5-global--Color--100:var(--psy-text);
+  --pf-v5-global--Color--200:var(--psy-muted);
+  --pf-v5-global--BorderColor--100:var(--psy-line);
+  --pf-v5-global--BorderColor--200:var(--psy-line);
+  --pf-v5-global--primary-color--100:var(--psy-accent);
+  --pf-v5-global--primary-color--200:var(--psy-accent);
+  --pf-v5-global--link--Color:var(--psy-accent);
+  --pf-v5-global--link--Color--hover:var(--psy-accent);
+  --pf-v5-global--active-color--100:var(--psy-accent);
+  --pf-v5-global--disabled-color--100:var(--psy-muted);
+  --pf-v5-global--disabled-color--200:var(--psy-field);
+  font-family:'PsyNet Sans',system-ui,sans-serif;
+  color-scheme:var(--psy-color-scheme);
+}
+body{color:var(--psy-text);background:var(--psy-background);font-family:'PsyNet Sans',system-ui,sans-serif}
+.pf-v5-c-page{background:var(--psy-background)}
+.pf-v5-c-masthead,.pf-v5-c-page__header{
+  background:linear-gradient(#0b1523a8,#0b1523a8),url(forest.webp) center 40%/cover;
+  border-bottom:2px solid #80e7df;color:#fff;min-height:76px;
+}
+.pf-v5-c-masthead .pf-v5-c-toolbar{background:transparent;color:#fff}
+.pf-v5-c-masthead__brand img,.pf-v5-c-page__header-brand img{width:190px;max-width:100%;height:auto;max-height:64px;object-fit:contain}
+.pf-v5-c-page__sidebar{
+  background:linear-gradient(#0b1523e8,#0b1523db),url(forest.webp) 30% center/cover;
+  border-inline-end:1px solid #45566b;color:#f4f6fb;
+}
+.pf-v5-c-page__sidebar .pf-v5-c-nav__link{color:#e4edf8}
+.pf-v5-c-page__sidebar .pf-v5-c-nav__link.pf-m-current{color:#80e7df;background:#182d41}
+.pf-v5-c-page__main-section{background-color:var(--psy-surface)}
+.pf-v5-c-page__main-section.pf-m-light{background-color:var(--psy-surface)}
+.pf-v5-c-title,h1,h2{font-family:'PsyNet Circuit','PsyNet Sans',sans-serif;font-weight:400;overflow-wrap:anywhere}
+.pf-v5-c-button.pf-m-primary{background:linear-gradient(110deg,#7de3de,#a4b8ff 55%,#e7a6ef);color:#14223e;border-radius:7px}
+.pf-v5-c-card,.pf-v5-c-modal-box{background:var(--psy-surface);color:var(--psy-text)}
+.pf-v5-c-form-control{background-color:var(--psy-field);color:var(--psy-text);border-color:var(--psy-line)}
+.pf-v5-c-form-control input,.pf-v5-c-form-control textarea,.pf-v5-c-form-control select{color:var(--psy-text)}
+.pf-v5-c-table{background:var(--psy-surface);color:var(--psy-text)}
+.pf-v5-c-table tr{border-color:var(--psy-line)}
+:focus-visible{outline:3px solid var(--psy-accent);outline-offset:3px}
+.keycloak__loading-container{background:var(--psy-background)!important;color:var(--psy-text)!important}
+@media(max-width:768px){.pf-v5-c-masthead__brand img,.pf-v5-c-page__header-brand img{width:150px}.pf-v5-c-page__main-section{padding-inline:16px}}

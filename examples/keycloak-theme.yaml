@@ -1,4 +1,7 @@
 # Merge the spec below into your EXISTING Keycloak CR.
+# One JAR includes login/account/admin/email in psynet-light and psynet-dark.
+# Select each theme in Realm settings > Themes after installation.
+# The master admin console uses master.adminTheme. SMTP is configured separately.
 # This is not a complete new Keycloak deployment (DB/TLS/hostname are omitted).
 # Use the API version served by your installed 26.x operator CRD.
 apiVersion: k8s.keycloak.org/v2alpha1

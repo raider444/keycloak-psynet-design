@@ -4,13 +4,13 @@
 
 Owner: Igor / GitHub raider444. Repository: raider444/keycloak-psynet-design.
 PsyNet is an IT/infrastructure project with a forest/dark-psytrance visual identity: a symmetric fractal/circuit logo, vivid cyan/violet/pink, magical mushrooms, cats and elves.
-The deliverable is a Keycloak **26.x login theme**, built with Keycloakify 11.16.1, React and Vite. Two variants: psynet-light and psynet-dark. Account/admin consoles are outside current scope.
+The deliverable is a Keycloak **26.x theme suite**: login, account, admin and email, in psynet-light and psynet-dark variants. Login uses Keycloakify 11.16.1, React and Vite. Account/admin inherit native keycloak.v3/keycloak.v2 consoles; never vendor or replace their JS or index.ftl. Email supplies HTML and text templates with native message keys, sanitization, links and expiry arguments.
 
 ## Visual requirements to preserve
 
 - Keep the original fractal outlines and clean PCB geometry, sharp joins and uniform trace widths. Do not substitute generic mathematical fractals.
 - Original layered SVG in brand-originals/PsyNet.svg separates fractals, PCB, wordmark and color; monochrome can invert but **colored layers must not invert**.
-- Runtime uses the cropped color emblem and the custom PsyNet Sans wordmark/body typeface; PsyNet Circuit is for headings with contact rings.
+- Runtime uses the cropped color emblem and the custom PsyNet Sans body typeface; PsyNet Circuit is for the PsyNet wordmark and headings with contact rings. Email uses a Circuit-rendered PNG logo and system-font fallbacks.
 - Custom fonts cover Latin, Cyrillic and Greek. Preserve font license and original font archive.
 - Both schemes retain the same psychedelic forest colors. Form surfaces/text change for contrast. Mobile layouts must stay usable.
 
@@ -22,6 +22,10 @@ The deliverable is a Keycloak **26.x login theme**, built with Keycloakify 11.16
 - src/main.tsx uses a mock context only for standalone development when window.kcContext is absent. Never send login data to custom endpoints.
 - Appearance is stored in localStorage under psynet-appearance; defaults come from kcContext.themeName.
 - src/kc.gen.tsx is generated; do not hand-edit. Do not commit public/keycloakify-dev-resources, node_modules, dist or dist_keycloak.
+
+- `theme-src/` contains console styling, email templates and the rendered Circuit brand PNG. `scripts/package-themes.py` merges these into the Keycloakify JAR and updates all four theme types in metadata.
+- Console variants follow the selected realm theme, independent of OS preference. Email HTML must use tables and inline critical styles, no JS, SVG, CSS variables or mandatory remote fonts; retain readable alt text and plain-text alternatives.
+- Update upstream email provenance/license when changing copied templates. Native parent fallback handles new server email types.
 
 ## Delivery contract
 
@@ -41,6 +45,8 @@ npm run build-keycloak-theme
 python3 scripts/check-jar.py
 npx playwright install --with-deps chromium
 npm run check-ui
+npm run check-integration # disposable Docker Keycloak + SMTP sink
+node --test scripts/release-version.test.mjs
 docker build -t psynet-theme:local .
 mkdir -p /tmp/psynet-theme-output
 # Let the non-root copy container write the test bind mount.
@@ -53,4 +59,4 @@ Use PSYNET_CHROMIUM_PATH for a preinstalled browser. Update previews when changi
 
 ## Repository hygiene
 
-Never commit secrets, tokens, credential URLs or generated dependencies. Preserve user work and avoid force pushes. Keep actions pinned to reviewed commit SHAs and the BusyBox multi-architecture base pinned by digest. Default publish branch is main, releases use v* tags; source remains the authority for artifacts.
+Never commit secrets, tokens, credential URLs or generated dependencies. Preserve user work and avoid force pushes. Keep actions pinned to reviewed commit SHAs and the BusyBox multi-architecture base pinned by digest. Default publish branch is main. The Semantic version release workflow selects patch/minor/major from stable vX.Y.Z tags (package.json baseline before the first tag), runs the reusable build/integration/publish pipeline, then creates a GitHub Release with JAR/checksum and image digest using GITHUB_TOKEN. Do not overwrite existing tags or release artifacts. Source remains the authority for artifacts.

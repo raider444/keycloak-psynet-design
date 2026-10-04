@@ -6,3 +6,8 @@ playwright-report/
 test-results/
 .env
 .env.*
+previews/**/*.log
+__pycache__/
+previews/**/failure.png
+# Baseline-version screenshots are kept as CI artifacts.
+previews/keycloak-26.0.8/

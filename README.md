@@ -1,6 +1,6 @@
-# PsyNet · Keycloak login design
+# PsyNet · Keycloak theme suite
 
-Светлая и тёмная темы **Keycloak 26.x** на Keycloakify 11.16.1. Фрактальный логотип и дорожки платы, шрифты PsyNet Sans / Circuit с латиницей, кириллицей и греческим, психоделический лес с волшебными грибами, котами и эльфами. Цвета фона и логотипа сохраняются в обеих схемах; переключатель меняет поверхность формы и текст.
+Светлая и тёмная темы **Keycloak 26.x** для login, account, admin и email. Login построен на Keycloakify 11.16.1. Фрактальный логотип и дорожки платы, шрифты PsyNet Sans / Circuit с латиницей, кириллицей и греческим, психоделический лес с волшебными грибами, котами и эльфами. Цвета фона и логотипа сохраняются в обеих схемах; переключатель меняет поверхность формы и текст.
 
 ![Тёмная тема](previews/dark.png)
 
@@ -10,7 +10,7 @@
 
 `ghcr.io/raider444/keycloak-psynet-design` — минимальный **образ для init-container**, который копирует JAR темы и завершается. Это не образ сервера Keycloak.
 
-В финальном образе — закреплённый multi-platform BusyBox 1.37.0-musl, `/theme/psynet-keycloak-26.jar`, SHA256 и shell-скрипт. Нет Node.js, Java, Maven, исходников или отдельных копий фоновых изображений. Весь необходимый фронтенд и ассеты уже внутри JAR. `.dockerignore` разрешает попадание в build context только установочных файлов. Размер JAR около 7 MB; точный размер образа зависит от платформы и сжатия слоёв.
+В финальном образе — закреплённый multi-platform BusyBox 1.37.0-musl, `/theme/psynet-keycloak-26.jar`, SHA256 и shell-скрипт. Нет Node.js, Java, Maven, исходников или отдельных копий фоновых изображений. Весь необходимый фронтенд и ассеты уже внутри JAR. `.dockerignore` разрешает попадание в build context только установочных файлов. Размер JAR около 13 MB; точный размер образа зависит от платформы и сжатия слоёв.
 
 Платформы: `linux/amd64`, `linux/arm64`. По умолчанию образ работает как UID/GID 1000; допускается другой non-root UID/GID с правом записи в каталог назначения. Внутри образа `/theme` имеет права `0555`, JAR и SHA256 — `0444`. Проверяет SHA256 исходного JAR, копирует файл с правами `0644`; по умолчанию назначение `/target`, другое можно передать первым аргументом.
 
@@ -20,7 +20,7 @@ Workflow [`.github/workflows/publish.yml`](.github/workflows/publish.yml):
 
 1. `npm ci`, Chromium-проверки интерфейса, TypeScript/Vite/Keycloakify/Maven-сборка.
 2. Проверка целостности JAR, списка тем, ключевых страниц и ассетов; создание SHA256.
-3. Сборка образа и проверка копирования от non-root с read-only корневой файловой системой.
+3. Интеграционные проверки установленного JAR на Keycloak 26.0.8 и 26.8.0: вход, сохранение профиля, admin console и HTML/text письма через локальный SMTP-приёмник. Затем сборка образа и проверка копирования от non-root с read-only корневой файловой системой.
 4. Сохранение JAR и SHA256 в Actions artifacts.
 5. Отдельная job публикует multi-platform образ в GHCR через автоматически выдаваемый `GITHUB_TOKEN` с `packages: write`.
 6. Опубликованный образ по digest проверяется на обеих платформах: копирование с UID 1000 и произвольным non-root UID, права `0644` и отказ при неверном SHA256.
@@ -36,6 +36,14 @@ Pull requests только проверяются; публикация выпо
 GitHub → Settings → Actions → General: разрешите Actions и используемые `actions/*` / `docker/*`, если они ограничены политикой. Право публикации указано в workflow. Если package с таким именем уже существует, дайте этому репозиторию доступ в package **Manage Actions access**.
 
 После первой публикации package может быть **private**, даже у публичного репозитория. Для анонимного pull сделайте package публичным в его настройках. Иначе используйте `imagePullSecrets`. Рекомендуемый production reference — `ghcr.io/raider444/keycloak-psynet-design@sha256:<digest>` из summary publish job; тег SHA коммита тоже удобен для идентификации сборки.
+
+## Semantic version релизы
+
+В Actions выберите **Semantic version release → Run workflow → main → patch / minor / major**. Workflow вычисляет следующую стабильную версию по максимальному тегу `vX.Y.Z`; до первого тега базой служит `package.json` (`1.0.0`). Например, первый `minor` выпустит `1.1.0`. Prerelease-теги не участвуют в расчёте; этот workflow выпускает стабильные версии без суффиксов.
+
+Выбранный SHA фиксируется до сборки. После всех проверок workflow публикует GHCR-теги `X.Y.Z`, `X.Y`, `sha-<SHA>` и `latest`, затем создаёт GitHub Release `vX.Y.Z` с JAR, SHA256, автоматически сгенерированными release notes и digest образа. Существующие теги не перемещаются. Версия доставки задаётся тегом релиза; `package.json` остаётся базовой версией проекта, workflow не создаёт скрытых коммитов в main.
+
+Используется только `GITHUB_TOKEN`: `packages: write` для образа и `contents: write` только в job создания релиза. Тег, созданный этим токеном, не запускает второй workflow; сборка вызывается напрямую через `workflow_call`. Обычный push `vX.Y.Z` также собирает версионный образ, но для GitHub Release с вложениями используйте **Semantic version release**. PR не публикует образ и не создаёт релиз.
 
 ## Подключение к Keycloak Operator
 
@@ -115,7 +123,22 @@ kubectl -n YOUR_NAMESPACE logs YOUR_KEYCLOAK_POD -c install-psynet-theme
 kubectl -n YOUR_NAMESPACE logs YOUR_KEYCLOAK_POD -c keycloak
 ```
 
-Когда Keycloak запустится: **Realm settings → Themes → Login theme → `psynet-light` / `psynet-dark` → Save**. Для конфигурации realm через JSON параметр: `"loginTheme": "psynet-dark"`. Внешний вид отдельных clients может быть задан их настройками темы, поэтому проверьте нужный client.
+Когда Keycloak запустится, откройте **Realm settings → Themes**, выберите `psynet-light` или `psynet-dark` отдельно для **Login theme**, **Account theme**, **Admin theme** и **Email theme**, затем Save. Все четыре типа входят в один JAR; дополнительных init-container и mount не требуется.
+
+Эквивалентные поля существующего realm (это не Keycloak CR):
+
+```json
+{
+  "loginTheme": "psynet-dark",
+  "accountTheme": "psynet-dark",
+  "adminTheme": "psynet-dark",
+  "emailTheme": "psynet-dark"
+}
+```
+
+Для `/admin/master/console/` задайте `adminTheme` в realm **master**: переключение управляемого realm внутри этой консоли не меняет realm самой консоли. Для `/admin/REALM/console/` настройте соответствующий realm. Account доступен по `/realms/REALM/account/`. Проверьте client-level override login theme, если он задан.
+
+В **Realm settings → Email** отдельно настройте SMTP, адрес отправителя и TLS. Тема не настраивает SMTP. Выполните Test connection, отправьте verification/reset password/execute actions и проверьте письма в нужных клиентах. Письма используют публичный HTTPS-адрес Keycloak для логотипа; корректно настройте hostname и reverse proxy. Не используйте внутренний адрес Kubernetes в публичных ссылках писем.
 
 При обновлении замените image reference на новый digest/tag и измените annotation `psynet.su/theme-version`: изменение Pod template запускает обновление Pod-ов. Одна лишь перепубликация `latest` не перезапускает уже работающие Pod-ы. Для отката верните предыдущий digest и annotation. Тема не меняет существующий realm и пользователей сама по себе.
 
@@ -149,7 +172,33 @@ npm run check-ui
 
 Локальный просмотр: `/?theme=light`, `/?theme=dark&lang=ru`, `/?page=login-reset-password.ftl&lang=ru`, `/?page=register.ftl`, `/?page=login-otp.ftl`, `/?lang=el`. При отсутствии `window.kcContext` используется mock-контекст; он не выполняет настоящую аутентификацию. В Keycloak штатный контекст содержит реальные URL и данные форм.
 
-В UI используется Keycloakify `DefaultPage`: штатные login/register/reset/OTP/WebAuthn/social и другие страницы аутентификации. Включение этих сценариев зависит от realm. Это тема **login**, не account или admin console. Тема не добавляет сторонние адреса отправки паролей или аналитику.
+В UI используется Keycloakify `DefaultPage`: штатные login/register/reset/OTP/WebAuthn/social и другие страницы аутентификации. Включение этих сценариев зависит от realm. Account и admin используют штатные приложения сервера через наследование `keycloak.v3` / `keycloak.v2`; их маршруты, API и формы не заменяются. Тема не добавляет сторонние адреса отправки паролей или аналитику.
+
+## Account, admin и email
+
+| Пример | Светлая схема | Тёмная схема |
+| --- | --- | --- |
+| Account | [Просмотр](previews/keycloak-26.8.0/account-light.png) | [Просмотр](previews/keycloak-26.8.0/account-dark.png) |
+| Admin | [Просмотр](previews/keycloak-26.8.0/admin-light.png) | [Просмотр](previews/keycloak-26.8.0/admin-dark.png) |
+| Письмо восстановления | [Просмотр](previews/keycloak-26.8.0/email-light-password-reset.png) | [Просмотр](previews/keycloak-26.8.0/email-dark-password-reset.png) |
+
+Console-темы добавляют лесной фон, цветной оригинальный знак, Circuit wordmark/заголовки и светлые/тёмные поверхности поверх штатного PatternFly 5. Схема консоли определяется выбранной темой realm и не зависит от настройки ОС; login сохраняет свой переключатель и `psynet-appearance`. Исходный `index.ftl` и JS консолей наследуются от установленного Keycloak, чтобы сохранять возможности конкретной версии 26.x.
+
+Email: HTML и plain text для verification (включая код), password reset, execute actions, привязки IdP, приглашения в организацию, email update/test и событий безопасности. Тексты и темы писем наследуют переводы Keycloak; URL, срок действия, required actions и `kcSanitize` сохранены. Новые типы писем сервера наследуются от `keycloak`; HTML с импортом `template.ftl` получает оформление PsyNet.
+
+HTML использует таблицу до 600 px, inline-цвета/отступы, Outlook conditional table и системные шрифты. Circuit-логотип — PNG из исходного SVG и лицензированного шрифта, без инверсии цветных слоёв. Если картинки заблокированы, остаются alt-текст, содержимое и рабочие ссылки. В plain text нет схемы цветов по определению; обе темы содержат полноценный текст. Почтовый клиент может принудительно перекрасить HTML в своём dark mode. Скриншоты Chromium подтверждают вёрстку, но не заменяют проверку Outlook/Gmail/Apple Mail.
+
+Для локальной проверки установленного пакета:
+
+```sh
+npm run build-keycloak-theme
+python3 scripts/check-jar.py
+PSYNET_KEYCLOAK_VERSION=26.0.8 npm run check-integration
+PSYNET_KEYCLOAK_VERSION=26.8.0 npm run check-integration
+node --test scripts/release-version.test.mjs
+```
+
+Нужны Docker и Chromium; `PSYNET_CHROMIUM_PATH` поддерживается. Тест создаёт временные Keycloak и Mailpit с закреплёнными digest, случайными паролями и loopback-портами, затем удаляет их. Он не использует Kubernetes или ваш realm. Снимки сохраняются в `previews/keycloak-VERSION/`. Покрываются две опорные версии 26.x; после обновления сервера проверяйте свою patch-версию и необходимые сценарии.
 
 ## Материалы и изменения дизайна
 
@@ -159,10 +208,14 @@ npm run check-ui
 - `src/login/assets/emblem.svg` — цветные слои исходного логотипа, обрезанные до эмблемы.
 - `src/login/assets/PsyNet-*.woff2` — шрифты; `FONT-LICENSE.txt` сохраняет их условия.
 - `brand-originals/` — оригинальный SVG со слоями и архив шрифтов.
+- `theme-src/console/` — оформление штатных консолей.
+- `theme-src/email/` — HTML/text, происхождение шаблонов и лицензия upstream.
+- `theme-src/brand/psynet-logo.png` — Circuit wordmark с оригинальным знаком; пересборка `npm run render-brand`.
+- `scripts/package-themes.py` — объединение четырёх типов в один JAR.
 - `previews/` — изображения интерфейса, в том числе мобильного.
 - `AGENTS.md` — контекст и требования для дальнейшей работы.
 
-Фон создан по описанию: magical psychedelic forest, luminous mushrooms, two cats, graceful elves, fractal ferns, cyan/violet/pink bioluminescence; no text or UI. Цветные слои не инвертируются. Основная надпись/текст — PsyNet Sans; заголовки с контактными кольцами — PsyNet Circuit.
+Фон создан по описанию: magical psychedelic forest, luminous mushrooms, two cats, graceful elves, fractal ferns, cyan/violet/pink bioluminescence; no text or UI. Цветные слои не инвертируются. Надпись PsyNet и заголовки с контактными кольцами — PsyNet Circuit; основной текст — PsyNet Sans. В письмах основной текст использует Arial/Helvetica для совместимости.
 
 ## Доступ к GitHub для разработки
 
@@ -185,4 +238,4 @@ PAT не используется для `git@github.com:...` — этот remot
 
 Локально проверяются сборка исходников/JAR, браузерные формы и checksum. Реальную аутентификацию и манифест нужно проверить на вашем realm после подключения: успешный/неуспешный вход, переводы, reset, регистрация и используемые факторы. Запуск CI и публикация образа подтверждаются только после успешного run в GitHub Actions.
 
-Документация: [Keycloakify variants](https://docs.keycloakify.dev/features/theme-variants), [Operator advanced configuration](https://www.keycloak.org/operator/advanced-configuration), [Operator 26.0.0 custom image guide](https://github.com/keycloak/keycloak/blob/26.0.0/docs/guides/operator/customizing-keycloak.adoc), [GitHub Container registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry), [PAT management](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
+Документация: [Keycloak themes](https://www.keycloak.org/ui-customization/themes), [GitHub token workflow triggers](https://docs.github.com/en/actions/concepts/security/github_token), [Keycloakify variants](https://docs.keycloakify.dev/features/theme-variants), [Operator advanced configuration](https://www.keycloak.org/operator/advanced-configuration), [Operator 26.0.0 custom image guide](https://github.com/keycloak/keycloak/blob/26.0.0/docs/guides/operator/customizing-keycloak.adoc), [GitHub Container registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry), [PAT management](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).

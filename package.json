@@ -1,13 +1,15 @@
 {
   "name": "psynet-keycloak",
   "version": "1.0.0",
-  "description": "PsyNet light and dark Keycloak 26.x login themes and BusyBox theme-copy image",
+  "description": "PsyNet login, account, admin and email themes for Keycloak 26.x",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc && vite build",
-    "build-keycloak-theme": "npm run build && keycloakify build",
+    "build-keycloak-theme": "npm run build && keycloakify build && python3 scripts/package-themes.py",
     "preview": "vite preview --host 0.0.0.0",
-    "check-ui": "node check.mjs"
+    "check-ui": "node check.mjs",
+    "check-integration": "node scripts/check-integration.mjs",
+    "render-brand": "node scripts/render-brand.mjs"
   },
   "keywords": [],
   "author": "",
