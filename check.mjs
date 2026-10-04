@@ -37,7 +37,7 @@ try {
   await page.evaluate(()=>localStorage.clear());
   await page.reload();
   await page.locator('#username').waitFor();
-  await page.evaluate(()=>document.fonts.ready);
+  await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.images].map(image=>image.decode()));});
   assert.equal(await page.locator('.psy-shell').getAttribute('data-appearance'),mode);
   await page.screenshot({path:`previews/${mode}.png`,fullPage:true});
  }
@@ -55,13 +55,13 @@ try {
  for(const [id,input] of [['register.ftl','input[name="email"]'],['login-reset-password.ftl','#username'],['login-otp.ftl','#otp']]){
   await page.goto(`http://127.0.0.1:5173/?page=${id}&lang=ru`);
   await page.locator(input).waitFor();
-  await page.evaluate(()=>document.fonts.ready);
+  await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.images].map(image=>image.decode()));});
   await page.screenshot({path:`previews/${id}.png`,fullPage:true});
  }
  await page.setViewportSize({width:390,height:844});
  await page.goto('http://127.0.0.1:5173/?lang=el');
  await page.locator('#username').waitFor();
- await page.evaluate(()=>document.fonts.ready);
+ await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.images].map(image=>image.decode()));});
  await page.screenshot({path:'previews/mobile.png',fullPage:true});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  assert.deepEqual(errors,[],'Unexpected browser exceptions');
