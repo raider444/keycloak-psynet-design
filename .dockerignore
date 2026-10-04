@@ -1,0 +1,7 @@
+**
+!Dockerfile
+!container/
+!container/copy-theme.sh
+!dist_keycloak/
+!dist_keycloak/psynet-keycloak-26.jar
+!dist_keycloak/psynet-keycloak-26.jar.sha256

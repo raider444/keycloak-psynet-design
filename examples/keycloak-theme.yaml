@@ -1,0 +1,59 @@
+# Merge the spec below into your EXISTING Keycloak CR.
+# This is not a complete new Keycloak deployment (DB/TLS/hostname are omitted).
+# Use the API version served by your installed 26.x operator CRD.
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: Keycloak
+metadata:
+  name: keycloak
+spec:
+  # The theme JAR is installed after the server image build.
+  # Allow augmentation at startup so Keycloak discovers it.
+  startOptimized: false
+  unsupported:
+    podTemplate:
+      metadata:
+        annotations:
+          psynet.su/theme-version: "replace-with-release-or-image-digest"
+      spec:
+        securityContext:
+          # Makes the emptyDir writable by the non-root copy container.
+          # Adapt to your existing securityContext / OpenShift-assigned IDs.
+          fsGroup: 1000
+        initContainers:
+          - name: install-psynet-theme
+            # Replace latest with a published sha-* / version tag or @sha256:digest.
+            image: ghcr.io/raider444/keycloak-psynet-design:latest
+            imagePullPolicy: Always
+            args: ["/target"]
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: ["ALL"]
+              seccompProfile:
+                type: RuntimeDefault
+            resources:
+              requests:
+                cpu: 10m
+                memory: 16Mi
+              limits:
+                cpu: 100m
+                memory: 32Mi
+            volumeMounts:
+              - name: psynet-theme
+                mountPath: /target
+        containers:
+          - name: keycloak
+            volumeMounts:
+              # Mount one file: other providers from the server image remain visible.
+              - name: psynet-theme
+                mountPath: /opt/keycloak/providers/psynet-keycloak-26.jar
+                subPath: psynet-keycloak-26.jar
+                readOnly: true
+        volumes:
+          - name: psynet-theme
+            emptyDir:
+              sizeLimit: 32Mi

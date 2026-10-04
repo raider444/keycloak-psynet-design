@@ -1,0 +1,7 @@
+# Preserve upstream/generated text without reporting its existing trailing spaces.
+src/kc.gen.tsx whitespace=-blank-at-eol
+src/login/assets/FONT-LICENSE.txt whitespace=-blank-at-eol
+*.png binary
+*.webp binary
+*.woff2 binary
+*.zip binary

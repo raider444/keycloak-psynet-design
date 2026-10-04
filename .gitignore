@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dist_keycloak/
+public/keycloakify-dev-resources/
+playwright-report/
+test-results/
+.env
+.env.*
