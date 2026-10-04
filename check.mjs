@@ -2,18 +2,32 @@ import {spawn} from 'node:child_process';
 import {mkdir} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import {chromium} from '@playwright/test';
+import {setTimeout as delay} from 'node:timers/promises';
 
 await mkdir('previews', {recursive:true});
 const server=spawn(process.execPath,['node_modules/vite/bin/vite.js','--host','127.0.0.1','--port','5173','--strictPort']);
 let browser;
+let serverError;
+let serverOutput='';
+server.stdout.on('data',d=>{serverOutput=(serverOutput+d.toString()).slice(-10000);});
+server.stderr.on('data',d=>{serverOutput=(serverOutput+d.toString()).slice(-10000);process.stderr.write(d);});
+server.once('error',e=>{serverError=e;});
+server.once('exit',(code,signal)=>{serverError=new Error(`Vite exited: ${signal ?? code}`);});
 try {
- await new Promise((resolve,reject)=>{
-  const timeout=setTimeout(()=>reject(new Error('Vite startup timed out')),20000);
-  server.stdout.on('data',d=>{if(d.toString().includes('Local:')){clearTimeout(timeout);resolve();}});
-  server.stderr.on('data',d=>process.stderr.write(d));
-  server.once('error',e=>{clearTimeout(timeout);reject(e);});
-  server.once('exit',code=>{clearTimeout(timeout);reject(new Error(`Vite exited: ${code}`));});
- });
+ const deadline=Date.now()+20000;
+ while(true){
+  if(serverError) throw serverError;
+  let ready=false;
+  try {
+   const response=await fetch('http://127.0.0.1:5173/',{signal:AbortSignal.timeout(1000)});
+   ready=response.ok;
+   await response.body?.cancel();
+  } catch {}
+  if(serverError) throw serverError;
+  if(ready) break;
+  if(Date.now()>=deadline) throw new Error(`Vite startup timed out\n${serverOutput}`);
+  await delay(100);
+ }
  browser=await chromium.launch({headless:true,executablePath:process.env.PSYNET_CHROMIUM_PATH,args:['--no-sandbox']});
  const page=await browser.newPage({viewport:{width:1440,height:1000}});
  const errors=[];
