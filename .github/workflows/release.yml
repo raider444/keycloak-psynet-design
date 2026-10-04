@@ -2,6 +2,11 @@ name: Semantic version release
 on:
   workflow_dispatch:
     inputs:
+      version:
+        description: Optional exact stable version X.Y.Z (overrides bump)
+        type: string
+        default: ''
+        required: false
       bump:
         description: Semantic version increment (latest stable tag, or package.json for first release)
         type: choice
@@ -30,10 +35,21 @@ jobs:
         id: version
         env:
           BUMP: ${{ inputs.bump }}
+          EXACT_VERSION: ${{ inputs.version }}
         run: |
           test "$GITHUB_REF" = refs/heads/main
           node --test scripts/release-version.test.mjs
-          echo "version=$(node scripts/release-version.mjs "$BUMP")" >> "$GITHUB_OUTPUT"
+          if [ -n "$EXACT_VERSION" ]; then
+            node scripts/release-version.mjs validate "$EXACT_VERSION"
+            version="$EXACT_VERSION"
+          else
+            version=$(node scripts/release-version.mjs "$BUMP")
+          fi
+          if git show-ref --verify --quiet "refs/tags/v$version"; then
+            echo 'Release tag already exists; refusing to overwrite it.' >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
   build-publish:
     needs: version

@@ -39,7 +39,7 @@ GitHub → Settings → Actions → General: разрешите Actions и ис�
 
 ## Semantic version релизы
 
-В Actions выберите **Semantic version release → Run workflow → main → patch / minor / major**. Workflow вычисляет следующую стабильную версию по максимальному тегу `vX.Y.Z`; до первого тега базой служит `package.json` (`1.0.0`). Например, первый `minor` выпустит `1.1.0`. Prerelease-теги не участвуют в расчёте; этот workflow выпускает стабильные версии без суффиксов.
+В Actions выберите **Semantic version release → Run workflow → main → patch / minor / major**. Workflow вычисляет следующую стабильную версию по максимальному тегу `vX.Y.Z`; до первого тега базой служит `package.json` (`1.0.0`). Например, первый `minor` выпустит `1.1.0`. Для точной версии заполните необязательное поле `version`, например `1.0.0`: оно имеет приоритет над `bump`. Существующий тег отклоняется до сборки. Prerelease-теги не участвуют в расчёте; этот workflow выпускает стабильные версии без суффиксов.
 
 Выбранный SHA фиксируется до сборки. После всех проверок workflow публикует GHCR-теги `X.Y.Z`, `X.Y`, `sha-<SHA>` и `latest`, затем создаёт GitHub Release `vX.Y.Z` с JAR, SHA256, автоматически сгенерированными release notes и digest образа. Существующие теги не перемещаются. Версия доставки задаётся тегом релиза; `package.json` остаётся базовой версией проекта, workflow не создаёт скрытых коммитов в main.
 
