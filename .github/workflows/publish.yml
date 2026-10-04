@@ -45,15 +45,7 @@ jobs:
       - name: Build minimal copy image
         run: docker build --tag psynet-theme:ci .
       - name: Verify non-root copy on a read-only root filesystem
-        run: |
-          destination="$(mktemp -d)"
-          trap 'rm -rf "$destination"' EXIT
-          chmod 0777 "$destination"
-          docker run --rm --read-only --cap-drop=ALL \
-            --security-opt=no-new-privileges \
-            --volume "$destination:/target" psynet-theme:ci
-          cmp dist_keycloak/psynet-keycloak-26.jar "$destination/psynet-keycloak-26.jar"
-          test "$(stat -c '%a' "$destination/psynet-keycloak-26.jar")" = 644
+        run: sh scripts/check-copy-image.sh psynet-theme:ci
       - name: Upload verified JAR
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
@@ -120,6 +112,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: mode=min
+      - name: Verify published image on both platforms
+        env:
+          IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
+          IMAGE_NAME: ghcr.io/${{ github.repository }}
+        run: |
+          for platform in linux/amd64 linux/arm64; do
+            DOCKER_DEFAULT_PLATFORM="$platform" sh scripts/check-copy-image.sh "$IMAGE_NAME@$IMAGE_DIGEST"
+          done
       - name: Record deployment digest
         env:
           IMAGE_DIGEST: ${{ steps.image.outputs.digest }}

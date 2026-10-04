@@ -5,6 +5,9 @@ LABEL org.opencontainers.image.title="PsyNet Keycloak theme installer" \
       org.opencontainers.image.description="Light/dark Keycloak 26.x login theme JAR for an init-container" \
       org.opencontainers.image.source="https://github.com/raider444/keycloak-psynet-design"
 COPY --chmod=0444 dist_keycloak/psynet-keycloak-26.jar dist_keycloak/psynet-keycloak-26.jar.sha256 /theme/
+# COPY --chmod can also affect the created destination directory in BuildKit.
+# Every non-root UID needs traversal; the artifacts remain read-only (0444).
+RUN chmod 0555 /theme
 COPY --chmod=0555 container/copy-theme.sh /usr/local/bin/copy-theme
 USER 1000:1000
 ENTRYPOINT ["/usr/local/bin/copy-theme"]

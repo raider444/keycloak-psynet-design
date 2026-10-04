@@ -17,10 +17,12 @@ spec:
       spec:
         securityContext:
           # Makes the emptyDir writable by the non-root copy container.
+          # Does not change permissions inside the image (/theme).
           # Adapt to your existing securityContext / OpenShift-assigned IDs.
           fsGroup: 1000
         initContainers:
           - name: install-psynet-theme
+            # Copier image belongs ONLY here; keep the Keycloak server image.
             # Replace latest with a published sha-* / version tag or @sha256:digest.
             image: ghcr.io/raider444/keycloak-psynet-design:latest
             imagePullPolicy: Always
