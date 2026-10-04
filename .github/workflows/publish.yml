@@ -119,6 +119,8 @@ jobs:
         run: |
           for platform in linux/amd64 linux/arm64; do
             DOCKER_DEFAULT_PLATFORM="$platform" sh scripts/check-copy-image.sh "$IMAGE_NAME@$IMAGE_DIGEST"
+            # The runner's classic image store holds only one platform per digest.
+            docker image rm "$IMAGE_NAME@$IMAGE_DIGEST"
           done
       - name: Record deployment digest
         env:
